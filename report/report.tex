@@ -1,0 +1,96 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{mwe}
+%\usepackage{lingmacros}
+%\usepackage{tree-dvips}
+%\usepackage{blindtext}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+\usepackage[inline]{enumitem}
+
+\usepackage{tikz}
+
+\begin{document}
+
+\title{
+	Project 3: Neural Transliteration
+}
+\author{
+Gudjon Magnusson 
+\and Irina Yakubinskaya 
+\and Matthew Goldberg
+}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Seq-to-seq model configuration}
+
+\subsection{Q1}
+\textit{
+Describe the network architecture for the encoder, and for the decoder model: what kind of RNNs are used? What are the dimensions of the various layers? What are the non-linearity functions used? How is the attention computed?
+}
+
+
+\section{Training algorithm}
+
+\subsection{Q2}
+\textit{
+Two important hyperparameters control training: n\_iters and  learning\_rate. Explain what role each of them plays
+}
+
+\subsection{Q3}
+\textit{
+Select values for these hyperparameters using the validation set. Describe the experiments you ran to select those values, and explain your reasoning.
+}
+
+\section{Understanding teacher\_forcing}
+
+\subsection{Q4}
+\textit{
+Explain how training works if teacher\_forcing is set to 0, and if teacher\_forcing is set to 1.
+}
+
+\subsection{Q5}
+\textit{
+Investigate the impact of teacher forcing empirically. Report learning curves for 0.1, 0.5 and 0.9, and explain what you observe.
+}
+
+
+\section{Impact of attention mechanism}
+
+\subsection{Q6}
+\textit{
+Based on what we have learned in class, formulate a hypothesis about why the attention model is useful to model transliteration.	
+}
+
+\subsection{Q7}
+\textit{
+Update the implementation you have been given to use a sequence-to-sequence model without attention.  This will require modifying the code in transliterate.py to use DecoderRNN instead of AttnDecoderRNN.  Submit the modified code in a file named noattention.py
+}
+
+\subsection{Q8}
+\textit{
+Evaluate whether your hypothesis holds by comparing the behavior of the sequence-to-sequence model with and without attention empirically, at training and test time.
+}
+
+\section{Something new}
+
+\subsection{Q9}
+\textit{Briefly explain what you did}
+
+\subsection{Q10}
+\textit{Design an experiment to test whether your solution successfully addresses the problem}
+
+\subsection{Q11}
+\textit{}
+
+
+\end{document}

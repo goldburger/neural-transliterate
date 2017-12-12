@@ -75,15 +75,23 @@ Next we trained the model and tracked how the average edit distance on a small h
 \section{Understanding teacher\_forcing}
 
 \subsection{Q4}
-\textit{
-Explain how training works if teacher\_forcing is set to 0, and if teacher\_forcing is set to 1.
-}
+
+\textit{teacher\_forcing} is the probability of using the "teacher" for each training sample. If it is set to 1, the teacher is used on every sample.
+
+When the teacher is used for training mistakes that the model makes are ignored. At each time step, if the model makes a mistake, it contributes to loss but the model prediction is replaced the with the correct letter. The training moves to the next time step as if no mistake was made.
+
+If the teacher is used too much it can lead to an unstable model that learns how to create good looking outputs rather than good transliterations. I.e its better to get the correct transliteration with one spelling mistake, than the wrong word perfectly spelled.
 
 \subsection{Q5}
-\textit{
-Investigate the impact of teacher forcing empirically. Report learning curves for 0.1, 0.5 and 0.9, and explain what you observe.
-}
+ 
+With higher values of \textit{teacher\_forcing} the loss decays faster during training. This can be seen in figure \ref{fig_teacher}, which shows the learning curve for 3 different values of \textit{teacher\_forcing}.
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{img/learning_curve.pdf}
+    \caption{Learning curves for different values of \textit{teacher\_forcing}}
+    \label{fig_teacher}
+\end{figure}
 
 \section{Impact of attention mechanism}
 

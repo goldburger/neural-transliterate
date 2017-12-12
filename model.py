@@ -21,8 +21,9 @@ EOS_token = 1
 
 class Model:
 
-    def __init__(self, encoder, decoder, input_lang, output_lang):
+    def __init__(self, encoder, decoder, input_lang, output_lang, teacher_forcing=0.5):
 
+        self.teacher_forcing_ratio = teacher_forcing
         self.encoder = encoder
         self.decoder = decoder
         self.input_lang = input_lang
@@ -82,9 +83,7 @@ class Model:
 
         decoder_hidden = encoder_hidden
 
-        teacher_forcing_ratio = 0.5
-
-        use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+        use_teacher_forcing = True if random.random() < self.teacher_forcing_ratio else False
 
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input

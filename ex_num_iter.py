@@ -45,11 +45,11 @@ hidden_size = 256
 
 # training hyperparameters
 learn_rate = 0.01
-n_iter = 500
-n_test = 100
+n_iter = 100000
+n_test = 300
 
 # how verbose
-printfreq = 1000
+printfreq = 500
 plotfreq = 1
 
 # STEP 1: read in and prepare training data
@@ -67,15 +67,15 @@ edit_dist = []
 loss_log = []
 iter_log = []
 
-for i in range(1, int(n_iter/100)+1):
-	loss = model.trainIters(pairs, 100, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
+for i in range(1, int(n_iter/1000)+1):
+	loss = model.trainIters(pairs, 1000, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
 	loss_log += loss
 
 	# STEP 4: evaluate the model on unseen validation examples
 	#print("Evaluate on unseen data")
 	distance, outputs = model.generateTest(test_pairs)
 	edit_dist.append(float(distance) / len(outputs))
-	iter_log.append(i*100)
+	iter_log.append(i*1000)
 
 writePlot(loss_log, output_folder+'loss_curve.txt')
 writePlot(iter_log, output_folder+'iter_values.txt')

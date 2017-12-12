@@ -45,12 +45,12 @@ out_path = 'out.txt'
 hidden_size = 256
 
 # training hyperparameters
-learn_rate = [0.005, 0.01, 0.02, 0.04, 0.08, 0.1]
-n_iter = 200
-n_test = 100
+learn_rate = [0.001, 0.005, 0.01, 0.02, 0.04]
+n_iter = 30000
+n_test = 300
 
 # how verbose
-printfreq = 100
+printfreq = 500
 plotfreq = 1
 
 # STEP 1: read in and prepare training data
@@ -60,13 +60,11 @@ test_pairs = data.prepareTestData(val_path, input_lang, output_lang, reverse=Tru
 test_pairs = [random.choice(test_pairs) for i in range(n_test)]
 
 # STEP 2: define and train sequence to sequence model
-encoder = EncoderRNN(input_lang.n_chars, hidden_size)
-decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
-	
-
-model = Model(encoder, decoder, input_lang, output_lang)
 edit_dist = []
 for alpha in learn_rate:
+	encoder = EncoderRNN(input_lang.n_chars, hidden_size)
+	decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
+	model = Model(encoder, decoder, input_lang, output_lang)
 	loss_log = model.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=alpha)
 
 	file = '{0}alpha_{1}.txt'.format(output_folder, alpha)

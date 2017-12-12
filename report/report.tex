@@ -49,9 +49,28 @@ Describe the network architecture for the encoder, and for the decoder model: wh
 
 
 \subsection{Q3}
-\textit{
-Select values for these hyperparameters using the validation set. Describe the experiments you ran to select those values, and explain your reasoning. 
-}
+
+To choose values for \textit{learning\_rate} and \textit{n\_iter} we ran two experiments. 
+First we trained the model with a a few different values for \textit{learning\_rate} and tracked the loss for each iteration. We would like to find a value that decays the loss quickly and appears stable over a large number of iterations.
+Next we trained the model and tracked how the average edit distance on a small held out dataset changed after every 100 iterations. For this we fixed \textit{learning\_rate} to something that appeared reasonable, we choose 0.01. The goal is to see how long we can train the model before over-fitting. We expect to see the edit distance to get lower at first and then start to rise again at some point.
+
+\begin{figure}[t!]
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/alpha_unstable.pdf}
+        \caption{Learning curves for different $\alpha$}
+        \label{fig_learning_rate}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/learning_curve.pdf}
+        \caption{Average edit distance}
+        \label{fig_n_iter}
+    \end{subfigure}
+	\caption{Experiments with \textit{learning\_rate} and \textit{n\_iter}}
+	\label{fig_train_param}
+\end{figure}
+
 
 \section{Understanding teacher\_forcing}
 

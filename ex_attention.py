@@ -6,6 +6,7 @@ import matplotlib.ticker as ticker
 
 from transliterate import *
 from model import Model
+from model_noattention import ModelNoAttention
 import data
 
 
@@ -33,13 +34,12 @@ def writePlot(points, file):
 	f.close()
 
 
-output_folder = "experiment_data/teacher_forcing/"
+output_folder = "experiment_data/attention/"
 if not os.path.exists(os.path.dirname(output_folder)):
 	os.makedirs(os.path.dirname(output_folder))
 
 file_path = 'data/en_bg.val.txt'
 val_path = 'data/en_bg.train.txt'
-out_path = 'out.txt'
 
 # model parameters
 hidden_size = 256
@@ -49,10 +49,8 @@ learn_rate = 0.01
 n_iter = 500
 n_test = 100
 
-teacher_forcing = [0.1, 0.5, 0.9]
-
 # how verbose
-printfreq = 100
+printfreq = 1000
 plotfreq = 1
 
 # STEP 1: read in and prepare training data
@@ -62,30 +60,31 @@ test_pairs = data.prepareTestData(val_path, input_lang, output_lang, reverse=Tru
 test_pairs = [random.choice(test_pairs) for i in range(n_test)]
 
 # STEP 2: define and train sequence to sequence model
-encoder = EncoderRNN(input_lang.n_chars, hidden_size)
-decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
-	
+encoder1 = EncoderRNN(input_lang.n_chars, hidden_size)
+decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
+
+encoder2 = EncoderRNN(input_lang.n_chars, hidden_size)
+decoder2 = DecoderRNN(hidden_size, output_lang.n_chars, 1)
+
+model1 = Model(encoder1, decoder1, input_lang, output_lang)
+model2 = ModelNoAttention(encoder2, decoder2, input_lang, output_lang)
 
 edit_dist = []
-for tf in teacher_forcing:
 
-	model = Model(encoder, decoder, input_lang, output_lang, teacher_forcing=tf)
+print('Training model 1')
+loss_log1 = model1.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
+print('Training model 2')
+loss_log2 = model2.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
 
-	loss_log = model.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
+# STEP 4: evaluate the model on unseen validation examples
+print("Evaluate model1 on unseen data")
+distance, outputs = model1.generateTest(test_pairs)
+edit_dist.append(float(distance) / len(outputs))
 
-	file = '{0}teacher_forcing_{1}.txt'.format(output_folder, tf)
-	plot = '{0}teacher_forcing_{1}.pdf'.format(output_folder, tf)
+print("Evaluate model2 on unseen data")
+distance, outputs = model2.generateTest(test_pairs)
+edit_dist.append(float(distance) / len(outputs))
 
-	try:
-		writePlot(loss_log, file)
-		savePlot(loss_log, plot)
-	except:
-		pass
-
-	# STEP 4: evaluate the model on unseen validation examples
-	print("Evaluate on unseen data")
-	distance, outputs = model.generateTest(test_pairs)
-	edit_dist.append(float(distance) / len(outputs))
-
-writePlot(edit_dist, output_folder+'edit_distance.txt')
-
+writePlot(loss_log1, output_folder+'atn_loss_curve.txt')
+writePlot(loss_log2, output_folder+'no_atn_loss_curve.txt')
+writePlot(edit_dist, output_folder+'distance_values.txt')

@@ -117,8 +117,7 @@ class AttnDecoderRNN(nn.Module):
         embedded = self.dropout(embedded)
         attn_weights = F.softmax(
             self.attn(torch.cat((embedded[0], hidden[0]), 1)), dim=1)
-        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
-                                 encoder_outputs.unsqueeze(0))
+        attn_applied = torch.bmm(attn_weights.unsqueeze(0), encoder_outputs.unsqueeze(0))
 
         output = torch.cat((embedded[0], attn_applied[0]), 1)
         output = self.attn_combine(output).unsqueeze(0)
@@ -194,14 +193,14 @@ def train(input_variable, target_variable, encoder, decoder, encoder_optimizer, 
     if use_teacher_forcing:
         # Teacher forcing: Feed the target as the next input
         for di in range(target_length):
-            decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_output, encoder_outputs)
+            decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden) #, encoder_output, encoder_outputs)
 
             loss += criterion(decoder_output, target_variable[di])
             decoder_input = target_variable[di]
 
     else:
         for di in range(target_length):
-            decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_output, encoder_outputs)
+            decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden) #, encoder_output, encoder_outputs)
 
             topv, topi = decoder_output.data.topk(1)
             ni = topi[0][0]
@@ -243,8 +242,7 @@ def trainIters(pairs, input_lang, output_lang, encoder, decoder, n_iters, print_
         target_variable = training_pair[1]
 
         # train on one example
-        loss = train(input_variable, target_variable, encoder,
-                     decoder, encoder_optimizer, decoder_optimizer, criterion)
+        loss = train(input_variable, target_variable, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion)
         print_loss_total += loss
         plot_loss_total += loss
 
@@ -295,9 +293,7 @@ def generate(encoder, decoder, word, max_length=20):
 
     # generate output word one character at a time
     for di in range(max_length):
-        decoder_output, decoder_hidden, decoder_attention = decoder(
-            decoder_input, decoder_hidden, encoder_output, encoder_outputs)
-        decoder_attentions[di] = decoder_attention.data
+        decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden) #, encoder_output, encoder_outputs)
 
         # pick character with highest score at the output layer
         topv, topi = decoder_output.data.topk(1)
@@ -372,7 +368,7 @@ if __name__ == "__main__":
     
     # STEP 2: define and train sequence to sequence model
     encoder = EncoderRNN(input_lang.n_chars, hidden_size)
-    decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
+    decoder = DecoderRNN(hidden_size, output_lang.n_chars, 1)
     if use_cuda:
         encoder = encoder.cuda()
         decoder = decoder.cuda()
@@ -389,7 +385,7 @@ if __name__ == "__main__":
     distance, outputs = generateTest(encoder, decoder, test_pairs)
     if len(outputs) > 0:
         print ("Average edit distance %.4f" % (float(distance) / len(outputs)))
-        f = codecs.open(options.out_path, mode='wt', encoding='utf-8')
+        f = codecs.open(options.out_path, mode='w', encoding='utf-8')
         for o in outputs:
             f.write(o)
             f.write('\n')

@@ -42,13 +42,15 @@ Describe the network architecture for the encoder, and for the decoder model: wh
 \section{Training algorithm}
 
 \subsection{Q2}
-\textit{
-Two important hyperparameters control training: n\_iters and  learning\_rate. Explain what role each of them plays
-}
+
+\paragraph{n\_iters} is the number of training iterations used to train the model. Each iteration trains trains the model on one randomly chosen example from the training data.
+
+\paragraph{learning\_rate} is how much the weights are updated based on one example. Before the error gradient is subtracted from the weights, its multiplied by \textit{learning\_rate}. Slowing down the learning (with $learning\_rate < 1$) makes the process more stable and prevents one bad example from ruining good weights.
+
 
 \subsection{Q3}
 \textit{
-Select values for these hyperparameters using the validation set. Describe the experiments you ran to select those values, and explain your reasoning.
+Select values for these hyperparameters using the validation set. Describe the experiments you ran to select those values, and explain your reasoning. 
 }
 
 \section{Understanding teacher\_forcing}

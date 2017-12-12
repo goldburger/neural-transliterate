@@ -46,13 +46,13 @@ hidden_size = 256
 
 # training hyperparameters
 learn_rate = 0.01
-n_iter = 500
-n_test = 100
+n_iter = 15000
+n_test = 300
 
-teacher_forcing = [0.1, 0.5, 0.9]
+teacher_forcing = [0.0, 0.1, 0.5, 0.9, 1.0]
 
 # how verbose
-printfreq = 100
+printfreq = 500
 plotfreq = 1
 
 # STEP 1: read in and prepare training data
@@ -61,14 +61,12 @@ input_lang, output_lang, pairs = data.prepareTrainData(file_path, 'en', 'bg', re
 test_pairs = data.prepareTestData(val_path, input_lang, output_lang, reverse=True)
 test_pairs = [random.choice(test_pairs) for i in range(n_test)]
 
-# STEP 2: define and train sequence to sequence model
-encoder = EncoderRNN(input_lang.n_chars, hidden_size)
-decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
-	
 
 edit_dist = []
 for tf in teacher_forcing:
 
+	encoder = EncoderRNN(input_lang.n_chars, hidden_size)
+	decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
 	model = Model(encoder, decoder, input_lang, output_lang, teacher_forcing=tf)
 
 	loss_log = model.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)

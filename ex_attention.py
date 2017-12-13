@@ -46,8 +46,8 @@ hidden_size = 256
 
 # training hyperparameters
 learn_rate = 0.01
-n_iter = 500
-n_test = 100
+n_iter = 15000
+n_test = 300
 
 # how verbose
 printfreq = 1000

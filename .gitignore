@@ -3,6 +3,7 @@
 /experiment_data
 log
 *.pdf
+*~
 
 ## Mac stuff
 .DS_Store

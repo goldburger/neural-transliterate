@@ -1,7 +1,7 @@
 m1 = csvread('../experiment_data/attention/atn_loss_curve.txt');
 m2 = csvread('../experiment_data/attention/no_atn_loss_curve.txt');
 
-res = 10;
+res = 100;
 M = [m1, m2];
 [k, n] = size(M);
 

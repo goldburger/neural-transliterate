@@ -1,0 +1,105 @@
+
+\begin{tikzpicture}[node distance=0.5cm, auto]
+
+\begin{scope}[scale=0.88, transform shape]
+
+	%% Decoder
+	\node[draw] (h_0) {$h_0$};
+	\node[draw] (gru_f1) [right =of h_0]{GRU};
+	\node[draw] (gru_f2) [right =of gru_f1]{GRU};
+	\node (gru_fblank) [right =of gru_f2]{...};
+	\node[draw] (gru_fn) [right =of gru_fblank]{GRU};
+
+	\draw [->,thick] (h_0) edge (gru_f1);
+	\draw [->,thick] (gru_f1) edge (gru_f2);
+	\draw [->,thick] (gru_f2) edge (gru_fblank);
+	\draw [->,thick] (gru_fblank) edge (gru_fn);
+
+	\node[draw] (ef_1) [below =of gru_f1] {$E^{(b)}$};
+	\node[draw] (ef_2) [below =of gru_f2] {$E^{(b)}$};
+	\node[draw] (ef_n) [below =of gru_fn] {$E^{(b)}$};
+	\draw [->,thick] (ef_1) edge (gru_f1);
+	\draw [->,thick] (ef_2) edge (gru_f2);
+	\draw [->,thick] (ef_n) edge (gru_fn);
+
+	\node[draw] (f_1) [below =of ef_1] {$x^{(b)}_1$};
+	\node[draw] (f_2) [below =of ef_2] {$x^{(b)}_2$};
+	\node[draw] (f_n) [below =of ef_n] {$x^{(b)}_n$};
+	\draw [->,thick] (f_1) edge (ef_1);
+	\draw [->,thick] (f_2) edge (ef_2);
+	\draw [->,thick] (f_n) edge (ef_n);
+
+	\node[draw] (cat_f) at (3.5, 1.5) {concat\_col};
+	\node[draw] (A_f) [right =of cat_f] {$A$};
+	\draw [->,thick] (cat_f) edge (A_f);
+	\draw [->,thick] (gru_f1) edge (cat_f);
+	\draw [->,thick] (gru_f2) edge (cat_f);
+	\draw [->,thick] (gru_fn) edge (cat_f);
+
+	\node at (1.5, 2.9) {\textit{Encoder}};
+	\draw[thick,dashed] (0.5, -3.5) -- (6.8, -3.5) -- (6.8, 2.6) -- (0.5, 2.6) -- (0.5, -3.5);
+
+	%% Middle
+	\node[draw] (h_n) [right =of gru_fn]{$h_n$};
+	\draw [->,thick] (gru_fn) edge (h_n);
+
+	%% Encoder
+	\node[draw] (gru_e1) [right =of h_n]{GRU};
+	\node[draw] (gru_e2) [right = 1.0cm of gru_e1]{GRU};
+	\node (gru_eblank) [right =of gru_e2]{...};
+	\node[draw] (gru_en) [right =of gru_eblank]{GRU};
+	\draw [->,thick] (h_n) edge (gru_e1);
+	\draw [->,thick] (gru_e1) edge (gru_e2);
+	\draw [->,thick] (gru_e2) edge (gru_eblank);
+	\draw [->,thick] (gru_eblank) edge (gru_en);
+
+	\node[draw, scale=0.6] (log_e1) [above =of gru_e1]{log\_softmax};
+	\node[draw, scale=0.6] (log_e2) [above =of gru_e2]{log\_softmax};
+	\node[draw, scale=0.6] (log_en) [above =of gru_en]{log\_softmax};
+	\draw [->,thick] (gru_e1) edge (log_e1);
+	\draw [->,thick] (gru_e2) edge (log_e2);
+	\draw [->,thick] (gru_en) edge (log_en);
+
+	\node[draw] (p_1) [above =of log_e1]{$p^{(e)}_1$};
+	\node[draw] (p_2) [above =of log_e2]{$p^{(e)}_2$};
+	\node[draw, scale=0.8] (p_n) [above =of log_en]{<EOS>};
+	\draw [->,thick] (log_e1) edge (p_1);
+	\draw [->,thick] (log_e2) edge (p_2);
+	\draw [->,thick] (log_en) edge (p_n);
+
+	\node[draw] (att_1) [below =of gru_e1]{$\alpha$};
+	\node[draw] (att_2) [below =of gru_e2]{$\alpha$};
+	\node[draw] (att_n) [below =of gru_en]{$\alpha$};
+	\draw [->,thick] (att_1) edge (gru_e1);
+	\draw [->,thick] (att_2) edge (gru_e2);
+	\draw [->,thick] (att_n) edge (gru_en);
+
+	\node[draw] (ee_1) [below =of att_1]{$E^{(e)}$};
+	\node[draw] (ee_2) [below =of att_2]{$E^{(e)}$};
+	\node[draw] (ee_n) [below =of att_n]{$E^{(e)}$};
+	\draw [->,thick] (ee_1) edge (att_1);
+	\draw [->,thick] (ee_2) edge (att_2);
+	\draw [->,thick] (ee_n) edge (att_n);
+
+	\node[draw, scale=0.8] (sos) [below =of ee_1]{<SOS>};
+	\draw [->,thick] (sos) edge (ee_1);
+
+	\draw[->] (p_1) to[in=180,out=0] (ee_2);
+	\draw[->, shorten >=0.5cm] (p_2) to[in=90,out=0] (gru_eblank);
+	\draw[->, shorten <=0.5cm] (gru_eblank) to[in=180,out=270] (ee_n);
+
+	\node[draw] (A_e) [below = 1.1 of h_n]{$A$}; % at (8, -1.5)
+	\draw[->] (A_e) to[in=180,out=0] (att_1);
+	\draw[->] (A_e) to[in=180,out=0] (att_2);
+	\draw[->] (A_e) to[in=180,out=0] (att_n);
+
+	\draw[->] (h_n) to[in=180,out=0] (att_1);
+	\draw[->] (gru_e1) to[in=180,out=0] (att_2);
+	\draw[->] (gru_e2) to[in=180,out=0] (att_n);
+
+	\node at (9.2, 2.9) {\textit{Decoder}};
+	\draw[thick,dashed] (8.1, -3.5) -- (15.0, -3.5) -- (15.0, 2.6) -- (8.1, 2.6) -- (8.1, -3.5);
+
+\end{scope}
+
+\end{tikzpicture}

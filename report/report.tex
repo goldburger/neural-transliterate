@@ -14,6 +14,7 @@
 \usepackage[inline]{enumitem}
 
 \usepackage{tikz}
+\usetikzlibrary{positioning}
 
 \begin{document}
 
@@ -34,10 +35,27 @@ Gudjon Magnusson
 \section{Seq-to-seq model configuration}
 
 \subsection{Q1}
-\textit{
-Describe the network architecture for the encoder, and for the decoder model: what kind of RNNs are used? What are the dimensions of the various layers? What are the non-linearity functions used? How is the attention computed?
-}
 
+\begin{figure}[!h]
+\centering
+
+\input{computation_graph}
+
+\caption{Computation graph of the encoder-decoder model}
+\label{fig_compgraph}
+\end{figure}
+
+Figure \ref{fig_compgraph} shown an overview of how the model works. The attention mechanism is simplified to fit it in the graph and is represented by the unit $\alpha$. The attention score is computed using the bilinear method. A linear transformation is applied to the encoder embedding before computing the dot product with the decoder embedding.
+
+$h_i$ is the hidden layer at timestep $i$. It is a vector of size 256. $h_0$ is initialized as all zeros.
+
+$x_i$ represents the letter at position $i$ in the input word. It is used to lookup a character embedding in the embedding matrix $E$. $E^{(b)}$ is the embedding matrix for the input language, in this case Bulgarian written in the Cyrillic alphabet. $E^{(b)}$ has size $256 \times 85$. 85 different characters (including start and end tokens), each represented by an embedding of size 256. $E^{(e)}$ is the embedding matrix for the output language and has size $256 \times 31$.
+
+The output at each timestep in the encoder is concatenated to form a matrix $A$ which has size $256 \times n$, where $n$ is the length of the input word. The implementation uses a fixed size matrix with 20 columns but only the first $n$ have non-zero values. Words longer than 20 are filtered out of the training set.
+The matrix $A$ is used in the decoder for the attention mechanism.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Training algorithm}
 
@@ -45,38 +63,41 @@ Describe the network architecture for the encoder, and for the decoder model: wh
 
 \paragraph{n\_iters} is the number of training iterations used to train the model. Each iteration trains trains the model on one randomly chosen example from the training data.
 
-\paragraph{learning\_rate} is how much the weights are updated based on one example. Before the error gradient is subtracted from the weights, its multiplied by \textit{learning\_rate}. Slowing down the learning (with $learning\_rate < 1$) makes the process more stable and prevents one bad example from ruining good weights.
+\paragraph{learning\_rate} is how much the weights are updated based on one example. Before the error gradient is subtracted from the weights, its multiplied by \texttt{learning\_rate}. Slowing down the learning (with $learning\_rate < 1$) makes the process more stable and prevents one bad example from ruining good weights.
 
 
 \subsection{Q3}
 
-To choose values for \textit{learning\_rate} and \textit{n\_iter} we ran two experiments. 
-First we trained the model with a a few different values for \textit{learning\_rate} and tracked the loss for each iteration. We would like to find a value that decays the loss quickly and appears stable over a large number of iterations.
-Next we trained the model and tracked how the average edit distance on a small held out dataset changed after every 100 iterations. For this we fixed \textit{learning\_rate} to something that appeared reasonable, we choose 0.01. The goal is to see how long we can train the model before over-fitting. We expect to see the edit distance to get lower at first and then start to rise again at some point.
+To choose values for \texttt{learning\_rate}, commonly refereed to as $\alpha$, and \texttt{n\_iter} we ran two experiments. 
+First we trained the model with a a few different values for \texttt{learning\_rate} and tracked the loss for each iteration. We would like to find a value that decays the loss quickly and appears stable over a large number of iterations.
+Figure \ref{fig_learning_rate} shows the comparison of learning curves for a few different values of $\alpha$. In general higher values of $\alpha$ lead to faster convergence, but we found that the training becomes unstable when we raise $\alpha$ to 0.02 or higher. 
+
+Next we trained the model and tracked how the average edit distance on a small held out dataset changed after every 100 iterations. For this we fixed \texttt{learning\_rate} to something that appeared reasonable, we choose 0.01. The goal is to see how long we can train the model before over-fitting.
 
 \begin{figure}[t!]
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{img/alpha_unstable.pdf}
+        \includegraphics[width=\linewidth]{img/learning_rate2.eps}
         \caption{Learning curves for different $\alpha$}
         \label{fig_learning_rate}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{img/learning_curve.pdf}
+        \includegraphics[width=\linewidth]{img/n_iter2.eps}
         \caption{Average edit distance}
         \label{fig_n_iter}
     \end{subfigure}
-	\caption{Experiments with \textit{learning\_rate} and \textit{n\_iter}}
+	\caption{Experiments with \texttt{learning\_rate} and \texttt{n\_iter}}
 	\label{fig_train_param}
 \end{figure}
 
+We expected to see the edit distance to get lower at first and then start to rise again at some point, but as can be seen in figure \ref{fig_n_iter} the edit distance does not go back up. The score appears to plateau after about 15 thousand iterations, so there is little benefit to train past that.
 
-\section{Understanding teacher\_forcing}
+\section{Understanding teacher forcing}
 
 \subsection{Q4}
 
-\textit{teacher\_forcing} is the probability of using the "teacher" for each training sample. If it is set to 1, the teacher is used on every sample.
+\texttt{teacher\_forcing} is the probability of using the "teacher" for each training sample. If it is set to 1, the teacher is used on every sample.
 
 When the teacher is used for training mistakes that the model makes are ignored. At each time step, if the model makes a mistake, it contributes to loss but the model prediction is replaced the with the correct letter. The training moves to the next time step as if no mistake was made.
 
@@ -84,31 +105,51 @@ If the teacher is used too much it can lead to an unstable model that learns how
 
 \subsection{Q5}
  
-With higher values of \textit{teacher\_forcing} the loss decays faster during training. This can be seen in figure \ref{fig_teacher}, which shows the learning curve for 3 different values of \textit{teacher\_forcing}.
+With higher values of \texttt{teacher\_forcing} the loss decays faster during training. This can be seen in figure \ref{fig_teacher}, which shows the learning curve for 3 different values of \texttt{teacher\_forcing}.
+
+Although it converges faster with higher \texttt{teacher\_forcing}, the average edit distance is lower for the model that was trained with a lower \texttt{teacher\_forcing}. 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{img/learning_curve.pdf}
-    \caption{Learning curves for different values of \textit{teacher\_forcing}}
+    \includegraphics[width=\linewidth]{img/teacher_forcing2.eps}
+    \caption{Learning curves for different values of \texttt{teacher\_forcing}}
     \label{fig_teacher}
 \end{figure}
+
+\begin{center}
+ \begin{tabular}{|c || c | c | c | c | c |} 
+ \hline
+ \texttt{teacher\_forcing} & 0.0 & 0.1 & 0.5 & 0.9 & 1.0 \\ [0.5ex] 
+ \hline
+ Avg Edit Dist & 1.12 & 1.09 & 0.77 & 2.43 & 1.16 \\ 
+ \hline
+\end{tabular}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Impact of attention mechanism}
 
 \subsection{Q6}
-\textit{
-Based on what we have learned in class, formulate a hypothesis about why the attention model is useful to model transliteration.	
-}
 
-\subsection{Q7}
-\textit{
-Update the implementation you have been given to use a sequence-to-sequence model without attention.  This will require modifying the code in transliterate.py to use DecoderRNN instead of AttnDecoderRNN.  Submit the modified code in a file named noattention.py
-}
+Transliteration is not a simple one-to-one character replacement, there is a complicated relationship between the input and output characters. The attention mechanism helps to capture that relationship. At each timestep in prediction the model can focus on the input characters that are most likely to influence the output.
+
 
 \subsection{Q8}
-\textit{
-Evaluate whether your hypothesis holds by comparing the behavior of the sequence-to-sequence model with and without attention empirically, at training and test time.
-}
+
+Figure \ref{fig_attention} shows the learning curve for the model with and without the attention mechanism. The model converges faster with attention, and it performs better when evaluated on unseen data. The average edit distance is about 2.4 without attention and 1.72 with attention.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{img/attention2.eps}
+    \caption{Learning curves with and without the attention mechanism}
+    \label{fig_attention}
+\end{figure}
+
+%with attention 1.72
+%without 2.4
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Something new}
 

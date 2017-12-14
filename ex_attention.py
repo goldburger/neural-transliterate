@@ -38,8 +38,8 @@ output_folder = "experiment_data/attention/"
 if not os.path.exists(os.path.dirname(output_folder)):
 	os.makedirs(os.path.dirname(output_folder))
 
-file_path = 'data/en_bg.val.txt'
-val_path = 'data/en_bg.train.txt'
+file_path = 'data/en_bg.train.txt'
+val_path = 'data/en_bg.val.txt'
 
 # model parameters
 hidden_size = 256
@@ -57,7 +57,7 @@ plotfreq = 1
 input_lang, output_lang, pairs = data.prepareTrainData(file_path, 'en', 'bg', reverse=True)
 
 test_pairs = data.prepareTestData(val_path, input_lang, output_lang, reverse=True)
-test_pairs = [random.choice(test_pairs) for i in range(n_test)]
+#test_pairs = [random.choice(test_pairs) for i in range(n_test)]
 
 # STEP 2: define and train sequence to sequence model
 encoder1 = EncoderRNN(input_lang.n_chars, hidden_size)

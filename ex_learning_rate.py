@@ -37,8 +37,8 @@ output_folder = "experiment_data/learning_rate/"
 if not os.path.exists(os.path.dirname(output_folder)):
 	os.makedirs(os.path.dirname(output_folder))
 
-file_path = 'data/en_bg.val.txt'
-val_path = 'data/en_bg.train.txt'
+file_path = 'data/en_bg.train.txt'
+val_path = 'data/en_bg.val.txt'
 out_path = 'out.txt'
 
 # model parameters
@@ -47,7 +47,7 @@ hidden_size = 256
 # training hyperparameters
 learn_rate = [0.001, 0.005, 0.01, 0.02, 0.04]
 n_iter = 30000
-n_test = 300
+#n_test = 300
 
 # how verbose
 printfreq = 500
@@ -57,7 +57,7 @@ plotfreq = 1
 input_lang, output_lang, pairs = data.prepareTrainData(file_path, 'en', 'bg', reverse=True)
 
 test_pairs = data.prepareTestData(val_path, input_lang, output_lang, reverse=True)
-test_pairs = [random.choice(test_pairs) for i in range(n_test)]
+#test_pairs = [random.choice(test_pairs) for i in range(n_test)]
 
 # STEP 2: define and train sequence to sequence model
 edit_dist = []

@@ -46,8 +46,8 @@ hidden_size = 256
 
 # training hyperparameters
 learn_rate = 0.01
-n_iter = 15000
-n_test = 300
+n_iter = 40000
+#n_test = 300
 
 # how verbose
 printfreq = 1000
@@ -69,22 +69,34 @@ decoder2 = DecoderRNN(hidden_size, output_lang.n_chars, 1)
 model1 = Model(encoder1, decoder1, input_lang, output_lang)
 model2 = ModelNoAttention(encoder2, decoder2, input_lang, output_lang)
 
-edit_dist = []
+edit_dist1 = []
+edit_dist2 = []
+loss_log1 = []
+loss_log2 = []
+iter_log = []
 
-print('Training model 1')
-loss_log1 = model1.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
-print('Training model 2')
-loss_log2 = model2.trainIters(pairs, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
+for i in range(1, int(n_iter/1000)+1):
+	print('Training model 1')
+	loss1 = model1.trainIters(pairs, 1000, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
+	print('Training model 2')
+	loss2 = model2.trainIters(pairs, 1000, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
 
-# STEP 4: evaluate the model on unseen validation examples
-print("Evaluate model1 on unseen data")
-distance, outputs = model1.generateTest(test_pairs)
-edit_dist.append(float(distance) / len(outputs))
+	loss_log1 += loss1
+	loss_log2 += loss2
 
-print("Evaluate model2 on unseen data")
-distance, outputs = model2.generateTest(test_pairs)
-edit_dist.append(float(distance) / len(outputs))
+	# STEP 4: evaluate the model on unseen validation examples
+	print("Evaluate model1 on unseen data")
+	distance, outputs = model1.generateTest(test_pairs)
+	edit_dist1.append(float(distance) / len(outputs))
 
-writePlot(loss_log1, output_folder+'atn_loss_curve.txt')
-writePlot(loss_log2, output_folder+'no_atn_loss_curve.txt')
-writePlot(edit_dist, output_folder+'distance_values.txt')
+	print("Evaluate model2 on unseen data")
+	distance, outputs = model2.generateTest(test_pairs)
+	edit_dist2.append(float(distance) / len(outputs))
+
+	iter_log.append(i*1000)
+
+writePlot(loss_log1, output_folder+'attn_loss_curve.txt')
+writePlot(loss_log2, output_folder+'no_attn_loss_curve.txt')
+writePlot(edit_dist1, output_folder+'attn_dist_curve.txt')
+writePlot(edit_dist2, output_folder+'no_attn_dist_curve.txt')
+writePlot(iter_log, output_folder+'iter_values.txt')

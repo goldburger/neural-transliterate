@@ -47,7 +47,7 @@ hidden_size = 256
 # training hyperparameters
 learn_rate = 0.01
 n_iter = 40000
-#n_test = 300
+n_test = 300
 
 # how verbose
 printfreq = 1000
@@ -57,7 +57,7 @@ plotfreq = 1
 input_lang, output_lang, pairs = data.prepareTrainData(file_path, 'en', 'bg', reverse=True)
 
 test_pairs = data.prepareTestData(val_path, input_lang, output_lang, reverse=True)
-#test_pairs = [random.choice(test_pairs) for i in range(n_test)]
+test_pairs = [random.choice(test_pairs) for i in range(n_test)]
 
 # STEP 2: define and train sequence to sequence model
 encoder1 = EncoderRNN(input_lang.n_chars, hidden_size)

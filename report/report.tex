@@ -45,7 +45,7 @@ Gudjon Magnusson
 \label{fig_compgraph}
 \end{figure}
 
-Figure \ref{fig_compgraph} shown an overview of how the model works. The attention mechanism is simplified to fit it in the graph and is represented by the unit $\alpha$. The attention score is computed using the bilinear method. A linear transformation is applied to the encoder embedding before computing the dot product with the decoder embedding.
+Figure \ref{fig_compgraph} shows an overview of how the model works. The attention mechanism is simplified to fit it in the graph and is represented by the unit $\alpha$. The attention score is computed using the bilinear method. A linear transformation is applied to the encoder embedding before computing the dot product with the decoder embedding.
 
 $h_i$ is the hidden layer at timestep $i$. It is a vector of size 256. $h_0$ is initialized as all zeros.
 
@@ -61,7 +61,7 @@ The matrix $A$ is used in the decoder for the attention mechanism.
 
 \subsection{Q2}
 
-\paragraph{n\_iters} is the number of training iterations used to train the model. Each iteration trains trains the model on one randomly chosen example from the training data.
+\paragraph{n\_iters} is the number of training iterations used to train the model. Each iteration trains the model on one randomly chosen example from the training data.
 
 \paragraph{learning\_rate} is how much the weights are updated based on one example. Before the error gradient is subtracted from the weights, its multiplied by \texttt{learning\_rate}. Slowing down the learning (with $learning\_rate < 1$) makes the process more stable and prevents one bad example from ruining good weights.
 

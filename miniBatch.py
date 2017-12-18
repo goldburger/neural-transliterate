@@ -94,8 +94,10 @@ class AttnDecoderRNN(nn.Module):
         embedded = self.embedding(input) #.view(1, 1, -1)
         embedded = self.dropout(embedded)
 
+        n = input.size()[0]
+        batch_hidden = hidden.repeat(n,1,1)
 
-        attn_weights = F.softmax(self.attn(torch.cat((embedded, hidden), 2)), dim=1)
+        attn_weights = F.softmax(self.attn(torch.cat((embedded, batch_hidden), 2)), dim=1)
         attn_applied = torch.bmm(attn_weights, encoder_outputs)
 
         output = torch.cat((embedded, attn_applied), 2)        
@@ -168,24 +170,30 @@ def train_batch(input_batch, target_batch, encoder, decoder, encoder_optimizer, 
     decoder_input = decoder_input.cuda() if use_cuda else decoder_input
 
     decoder_hidden = encoder_hidden
+    #decoder_hidden = decoder_hidden.repeat(batch_size,1,1)
+
 
     encoder_outputs = encoder_outputs.unsqueeze(0).repeat(batch_size, 1, 1)
 
-    loss_mask = torch.FloatTensor([1]*batch_size)
-    mask = torch.ones(batch_size, MAX_LENGTH)
+    loss_mask = Variable(torch.FloatTensor([1]*batch_size))
+    loss_mask = loss_mask.cuda() if use_cuda else loss_mask
+
+    #mask = torch.ones(batch_size, MAX_LENGTH)
     #loss = Variable(torch.zeros(batch_size, MAX_LENGTH))
     #pred = Variable(torch.zeros(batch_size, MAX_LENGTH))
     for di in range(max_length):
-        decoder_hidden = decoder_hidden.repeat(batch_size,1,1)
         decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_output, encoder_outputs)
         
         decoder_output = decoder_output.squeeze(1)
 
         topv, topi = decoder_output.data.topk(1)
         ni = topi
-        
-        decoder_input = Variable(torch.LongTensor(ni))
+        decoder_input = Variable(topi)
         decoder_input = decoder_input.cuda() if use_cuda else decoder_input
+        
+        #print(ni)
+        #decoder_input = Variable(torch.LongTensor(ni))
+        #decoder_input = decoder_input.cuda() if use_cuda else decoder_input
 
         targets = target_batch[:, di]
         targets = targets.squeeze()
@@ -193,11 +201,11 @@ def train_batch(input_batch, target_batch, encoder, decoder, encoder_optimizer, 
         loss_batch = criterion(decoder_output, targets) #.view(-1, 1)
         #loss[:, di] = loss_batch
 
-        loss_batch = loss_batch * Variable(loss_mask)
+        loss_batch = loss_batch * loss_mask
         loss += loss_batch.sum()
 
-        mask[:, di] = loss_mask
-        loss_mask = (targets.data != EOS_token) & (loss_mask > 0)
+        #mask[:, di] = loss_mask
+        loss_mask = (targets != EOS_token) & (loss_mask > 0)
         loss_mask = loss_mask.float()
 
         #pred[:, di] = topi
@@ -247,7 +255,7 @@ def trainIters(pairs, input_lang, output_lang, encoder, decoder, n_epoch, print_
         if epoch % print_every == 0:
             print_loss_avg = print_loss_total / print_every
             print_loss_total = 0
-            print('%s (%d %d%%) %.4f' % (utils.timeSince(start, float(iter) / float(n_iters) ), iter, float(iter) / float(n_iters) * 100, print_loss_avg))
+            print('%s (%d %d%%) %.4f' % (utils.timeSince(start, float(epoch) / float(n_epoch) ), epoch, float(epoch) / float(n_epoch) * 100, print_loss_avg))
 
         if epoch % plot_every == 0:
             plot_loss_avg = plot_loss_total / float(plot_every)
@@ -255,7 +263,7 @@ def trainIters(pairs, input_lang, output_lang, encoder, decoder, n_epoch, print_
             plot_loss_total = 0
 
     # plot the learning curve
-    utils.showPlot(plot_losses)
+    #utils.showPlot(plot_losses)
 
 
 
@@ -362,7 +370,7 @@ if __name__ == "__main__":
     n_iter = options.iterations
     
     # how verbose
-    printfreq = 1000
+    printfreq = 100
     plotfreq = 1
     
     # STEP 1: read in and prepare training data
@@ -388,9 +396,9 @@ if __name__ == "__main__":
     distance, outputs = generateTest(encoder, decoder, test_pairs)
     if len(outputs) > 0:
         print ("Average edit distance %.4f" % (float(distance) / len(outputs)))
-        #f = codecs.open(options.out_path, mode='wt', encoding='utf-8')
-        #for o in outputs:
-        #    f.write(o)
-        #    f.write('\n')
-        #f.close()
+        f = codecs.open(options.out_path, mode='wt', encoding='utf-8')
+        for o in outputs:
+            f.write(o)
+            f.write('\n')
+        f.close()
 

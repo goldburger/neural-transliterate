@@ -3,7 +3,11 @@ from optparse import OptionParser
 import codecs
 import string
 import random
-import queue
+
+if sys.version_info >= (3, 0):
+	import queue as queue
+else:
+	import Queue as queue
 
 import torch
 import torch.nn as nn
@@ -140,7 +144,6 @@ class AttnDecoderRNN(nn.Module):
 			return result
 		
 
-
 class BeamNode():
 	def __init__(self, parent_node, hidden, token_index, score):
 		self.parent = parent_node
@@ -151,6 +154,20 @@ class BeamNode():
 		self.path_score = score
 		if self.parent != None:
 			self.path_score = self.parent.path_score + score
+
+
+	def decode(self, output_lang):
+		decoded_chars = []
+		node = self
+		while node != None:
+			char = output_lang.index2char[node.token_index]
+			decoded_chars.append(char)
+			node = node.parent
+		decoded_chars.pop()
+		decoded_chars.reverse()
+		decoded_chars.pop()
+
+		return decoded_chars
 
 
 #################################################################################
@@ -331,7 +348,7 @@ def generate(encoder, decoder, word, max_length=20):
 			for ki in range(k):
 				token_index = topi[0][ki]
 				token_score = topv[0][ki]
-				new_node = BeamNode(node, decoder_hidden, token_index, token_score)
+				new_node = BeamNode(node, decoder_hidden, token_index, token_score/20.0)
 				hypotheses.put( (-new_node.path_score, new_node) )
 				new_hypotheses = True
 
@@ -398,7 +415,7 @@ if __name__ == "__main__":
 	hidden_size = 256
 
 	# training hyperparameters
-	learn_rate = 0.01
+	learn_rate = 0.005
 	n_iter = options.iterations
 	
 	# how verbose
@@ -408,24 +425,18 @@ if __name__ == "__main__":
 	# STEP 1: read in and prepare training data
 	input_lang, output_lang, pairs = data.prepareTrainData(options.file_path, 'en', 'bg', reverse=True)
 	
-	"""
-
 	# STEP 2: define and train sequence to sequence model
 	encoder = EncoderRNN(input_lang.n_chars, hidden_size)
 	decoder = AttnDecoderRNN(hidden_size, output_lang.n_chars, 1, dropout_p=0.1)
-
-	print('hidden_size', hidden_size)
-	print('output', output_lang.n_chars)
 
 	if use_cuda:
 		encoder = encoder.cuda()
 		decoder = decoder.cuda()
 		
 	trainIters(pairs, input_lang, output_lang, encoder, decoder, n_iter, print_every=printfreq, plot_every=plotfreq, learning_rate=learn_rate)
-	"""
 
-	encoder = torch.load('encoder_model')
-	decoder = torch.load('decoder_model')
+	#encoder = torch.load('encoder_model')
+	#decoder = torch.load('decoder_model')
 
 	# STEP 3: generate transliteration output for a random sample of training examples
 	print("Examples of output for a random sample of training examples")
@@ -437,9 +448,9 @@ if __name__ == "__main__":
 	distance, outputs = generateTest(encoder, decoder, test_pairs)
 	if len(outputs) > 0:
 		print ("Average edit distance %.4f" % (float(distance) / len(outputs)))
-		#f = codecs.open(options.out_path, mode='wt', encoding='utf-8')
-		#for o in outputs:
-		#	f.write(o)
-		#	f.write('\n')
-		#f.close()
+		f = codecs.open(options.out_path, mode='w', encoding='utf-8')
+		for o in outputs:
+			f.write(o)
+			f.write('\n')
+		f.close()
 

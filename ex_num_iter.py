@@ -44,7 +44,7 @@ val_path = 'data/en_bg.val.txt'
 hidden_size = 256
 
 # training hyperparameters
-learn_rate = 0.01
+learn_rate = 0.005
 n_iter = 50000
 #n_test = 300
 

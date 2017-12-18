@@ -8,9 +8,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
-\usepackage{algorithmicx}
-\usepackage{algpseudocode}
-
 \usepackage[inline]{enumitem}
 
 \usepackage{tikz}
@@ -69,7 +66,7 @@ The matrix $A$ is used in the decoder for the attention mechanism.
 \subsection{Q3}
 
 To choose values for \texttt{learning\_rate}, commonly refereed to as $\alpha$, and \texttt{n\_iter} we ran two experiments. 
-First we trained the model with a a few different values for \texttt{learning\_rate} and tracked the loss for each iteration. We would like to find a value that decays the loss quickly and appears stable over a large number of iterations.
+First we trained the model with a few different values for \texttt{learning\_rate} and tracked the loss for each iteration. We would like to find a value that decays the loss quickly and appears stable over a large number of iterations.
 Figure \ref{fig_learning_rate} shows the comparison of learning curves for a few different values of $\alpha$. In general higher values of $\alpha$ lead to faster convergence, but we found that the training becomes unstable when we raise $\alpha$ to 0.02 or higher. 
 
 Next we trained the model and tracked how the average edit distance on a small held out dataset changed after every 100 iterations. For this we fixed \texttt{learning\_rate} to something that appeared reasonable, we choose 0.01. The goal is to see how long we can train the model before over-fitting.
@@ -99,9 +96,9 @@ We expected to see the edit distance to get lower at first and then start to ris
 
 \texttt{teacher\_forcing} is the probability of using the "teacher" for each training sample. If it is set to 1, the teacher is used on every sample.
 
-When the teacher is used for training mistakes that the model makes are ignored. At each time step, if the model makes a mistake, it contributes to loss but the model prediction is replaced the with the correct letter. The training moves to the next time step as if no mistake was made.
+When the teacher is used for training mistakes that the model makes are ignored. At each time step, if the model makes a mistake, it contributes to loss but the model prediction is replaced with the correct letter. The training moves to the next time step as if no mistake was made.
 
-If the teacher is used too much it can lead to an unstable model that learns how to create good looking outputs rather than good transliterations. I.e its better to get the correct transliteration with one spelling mistake, than the wrong word perfectly spelled.
+If the teacher is used too much it can lead to an unstable model that learns how to create good looking outputs rather than good transliterations. I.e it's better to get the correct transliteration with one spelling mistake, than the wrong word perfectly spelled.
 
 \subsection{Q5}
  
@@ -156,8 +153,38 @@ Figure \ref{fig_attention} shows the learning curve for the model with and witho
 \subsection{Q9}
 \textit{Briefly explain what you did}
 
+To improve the model we experimented with two modifications. Minibatch training and beam search decoding. The goal with these modifications is to stabilize and speed up the training, and improve the quality of the outputs.
+
+\subsubsection{Minibatch Training}
+
+We found that training with the original model was sometimes unstable. The loss would go down for a while but then briefly spike up again. This sometimes lead to a bad model if training happened to stop in one of those spikes. This could be addressed be by using a smarter stopping criteria or lowering the learning rate. We choose to address this by implementing mini batching.
+
+In addition to gaining stability we hoped to gain a noticeable increase in training speed thanks to the performance boost of grouping calculations together in matrix to matrix operations.
+
+\subsubsection{Beam Search Decoder}
+
+The original model produces output words one character at a time in a greedy fashion.
+We found that the output was often either fully correct or started correctly and then deviated completely after some point in the word. This lead us to believe that maybe the decoder was running into trouble because of one bad prediction, and, maybe it could be improved by considering more than one option at each timestep.
+
+To improve the chance of finding globally optimal prediction for the output word we implemented beam search. Instead of just using the locally optimal choice at each timestep, it graph that keeps tracks the $b$ best hypothesis for the output word.
+
 \subsection{Q10}
 \textit{Design an experiment to test whether your solution successfully addresses the problem}
+
+\subsubsection{Minibatch Training}
+
+\subsubsection{Beam Search Decoder}
+
+To test how the beam search decoder affects the output quality we train the model as we do normally. We then produce outputs with and without the beam decoder, and with a few different beam widths. We do this every thousand iterations as train the model and compare the average edit distance between the predicted output and the target output.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{img/beam_width2.eps}
+    \caption{The effect of beam width on edit distance}
+    \label{fig_beam_width}
+\end{figure}
+
+Unfortunately beam search decoder has an extreme bias for short words. We knew this might be the case but had hoped that it would still show an improvement with low values of $b$. As shown in figure \ref{fig_beam_width}, even with $b=2$ the quality suffers. As expected $b=1$ behaves the same as greedy decoding.
 
 \subsection{Q11}
 \textit{}

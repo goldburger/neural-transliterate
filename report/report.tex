@@ -69,7 +69,9 @@ To choose values for \texttt{learning\_rate}, commonly refereed to as $\alpha$, 
 First we trained the model with a few different values for \texttt{learning\_rate} and tracked the loss for each iteration. We would like to find a value that decays the loss quickly and appears stable over a large number of iterations.
 Figure \ref{fig_learning_rate} shows the comparison of learning curves for a few different values of $\alpha$. In general higher values of $\alpha$ lead to faster convergence, but we found that the training becomes unstable when we raise $\alpha$ to 0.02 or higher. 
 
-Next we trained the model and tracked how the average edit distance on a small held out dataset changed after every 100 iterations. For this we fixed \texttt{learning\_rate} to something that appeared reasonable, we choose 0.01. The goal is to see how long we can train the model before over-fitting.
+Based on this experiment we initially came to the conclusion that $\alpha = 0.01$ was a reasonable value to use, but we later found that it would occasionally become unstable and produce random spikes in loss. For the remainder of the experiments we used $\alpha = 0.005$ and found no no problems with instability.
+
+Next we trained the model and tracked how the average edit distance on a small held out dataset changed after every 100 iterations. The goal is to see how long we can train the model before over-fitting.
 
 \begin{figure}[t!]
     \begin{subfigure}[t]{0.5\textwidth}
@@ -80,7 +82,7 @@ Next we trained the model and tracked how the average edit distance on a small h
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{img/n_iter2.eps}
+        \includegraphics[width=\linewidth]{img/n_iter_dist_3.eps}
         \caption{Average edit distance}
         \label{fig_n_iter}
     \end{subfigure}
@@ -88,7 +90,7 @@ Next we trained the model and tracked how the average edit distance on a small h
 	\label{fig_train_param}
 \end{figure}
 
-We expected to see the edit distance to get lower at first and then start to rise again at some point, but as can be seen in figure \ref{fig_n_iter} the edit distance does not go back up. The score appears to plateau after about 15 thousand iterations, so there is little benefit to train past that.
+We expected to see the edit distance to get lower at first and then start to rise again at some point, but as can be seen in figure \ref{fig_n_iter} the edit distance does not go back up. We trained it for 100 thousand iterations and saw no rise in edit distance. The score appears to plateau after about 15-20 thousand iterations, so there is little benefit to train past that. For the rest of the experiments we limit training to about 30 thousand iterations.
 
 \section{Understanding teacher forcing}
 
@@ -102,26 +104,30 @@ If the teacher is used too much it can lead to an unstable model that learns how
 
 \subsection{Q5}
  
-With higher values of \texttt{teacher\_forcing} the loss decays faster during training. This can be seen in figure \ref{fig_teacher}, which shows the learning curve for 3 different values of \texttt{teacher\_forcing}.
+With higher values of \texttt{teacher\_forcing} the loss decays slightly faster during training. This can be seen in figure \ref{fig_teacher}, which shows the learning curve for 3 different values of \texttt{teacher\_forcing}.
 
-Although it converges faster with higher \texttt{teacher\_forcing}, the average edit distance is lower for the model that was trained with a lower \texttt{teacher\_forcing}. 
+Although it converges faster and reaches a lower loss with higher \texttt{teacher\_forcing}, the average edit distance is lower for the model that was trained with a lower \texttt{teacher\_forcing} as can be seen in table \ref{table_teacher_forcing}. The lowest edit distance is achieved with \texttt{teacher\_forcing} close to 0.5.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{img/teacher_forcing2.eps}
+    \includegraphics[width=\linewidth]{img/teacher_forcing3.eps}
     \caption{Learning curves for different values of \texttt{teacher\_forcing}}
     \label{fig_teacher}
 \end{figure}
 
-\begin{center}
- \begin{tabular}{|c || c | c | c | c | c |} 
- \hline
- \texttt{teacher\_forcing} & 0.0 & 0.1 & 0.5 & 0.9 & 1.0 \\ [0.5ex] 
- \hline
- Avg Edit Dist & 1.12 & 1.09 & 0.77 & 2.43 & 1.16 \\ 
- \hline
-\end{tabular}
-\end{center}
+\begin{table}[h]
+    \begin{center}
+     \begin{tabular}{|c || c | c | c | c | c |} 
+     \hline
+     \texttt{teacher\_forcing} & 0.0 & 0.1 & 0.5 & 0.9 & 1.0 \\ [0.5ex] 
+     \hline
+     Avg Edit Dist & 1.12 & 1.09 & 0.77 & 2.43 & 1.16 \\ 
+     \hline
+    \end{tabular}
+    \end{center}
+    \caption{Average edit distance after training the model with different values of \texttt{teacher\_forcing}}
+    \label{table_teacher_forcing}
+\end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -134,11 +140,11 @@ Transliteration is not a simple one-to-one character replacement, there is a com
 
 \subsection{Q8}
 
-Figure \ref{fig_attention} shows the learning curve for the model with and without the attention mechanism. The model converges faster with attention, and it performs better when evaluated on unseen data. The average edit distance is about 2.4 without attention and 1.72 with attention.
+Figure \ref{fig_attention} shows the learning curve for the model with and without the attention mechanism. The model converges considerably faster with attention, and it performs better when evaluated on unseen data. The average edit distance is about 1.17 without attention and 0.74 with attention.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{img/attention2.eps}
+    \includegraphics[width=\linewidth]{img/attention6.eps}
     \caption{Learning curves with and without the attention mechanism}
     \label{fig_attention}
 \end{figure}
@@ -151,27 +157,32 @@ Figure \ref{fig_attention} shows the learning curve for the model with and witho
 \section{Something new}
 
 \subsection{Q9}
-\textit{Briefly explain what you did}
 
-To improve the model we experimented with two modifications. Minibatch training and beam search decoding. The goal with these modifications is to stabilize and speed up the training, and improve the quality of the outputs.
+To improve the model we experimented with two modifications. Minibatch training and beam search decoding. The goal with these modifications was to stabilize and speed up the training, and improve the quality of the outputs.
 
 \subsubsection{Minibatch Training}
 
-We found that training with the original model was sometimes unstable. The loss would go down for a while but then briefly spike up again. This sometimes lead to a bad model if training happened to stop in one of those spikes. This could be addressed be by using a smarter stopping criteria or lowering the learning rate. We choose to address this by implementing mini batching.
+We found that training with the original model was sometimes unstable. The loss would go down for a while but then briefly spike up again. This sometimes lead to a bad model if training happened to stop in one of those spikes. This could be addressed be by using a smarter stopping criteria or lowering the learning rate. 
 
-In addition to gaining stability we hoped to gain a noticeable increase in training speed thanks to the performance boost of grouping calculations together in matrix to matrix operations.
+We choose to address this by implementing minibatching. Minibatching stabilizes the training process by considering the loss over multiple training examples before updating the parameters. That way a single bad example is less likely to move the model in the wrong direction.
 
-\subsubsection{Beam Search Decoder}
+In addition to gaining stability we hoped to gain a noticeable increase in training speed thanks to the performance boost of grouping calculations together in matrix to matrix operations. Unfortunately we were unable to get this functionality working in time. 
+Instead we implemented minibatching with a simple loop that summed up the loss for multiple examples before doing back propagation and updating the weights.
+
+\subsubsection{Beam Search Experiment}
 
 The original model produces output words one character at a time in a greedy fashion.
 We found that the output was often either fully correct or started correctly and then deviated completely after some point in the word. This lead us to believe that maybe the decoder was running into trouble because of one bad prediction, and, maybe it could be improved by considering more than one option at each timestep.
 
-To improve the chance of finding globally optimal prediction for the output word we implemented beam search. Instead of just using the locally optimal choice at each timestep, it graph that keeps tracks the $b$ best hypothesis for the output word.
+To improve the chance of finding a globally optimal prediction for the output word we implemented beam search. Instead of just using the locally optimal choice at each timestep, it graph that keeps tracks the $b$ best hypothesis for the output word. This allows the decoder to make a locally suboptimal that leads to an overall better looking solution.
 
 \subsection{Q10}
-\textit{Design an experiment to test whether your solution successfully addresses the problem}
 
-\subsubsection{Minibatch Training}
+\subsubsection{Minibatch Experiment}
+
+The goal with minibatching was two fold, smoother learning curve and reduce the runtime of training. Unfortunately we failed to implement a vectorized implementation of minibatching, therefore don't expect to see any runtime improvement.
+
+To evaluate how the minibatching effects the learning curve we train the model multiple times with different batch sizes. Each time we use the same number of training examples but split them into epochs, $e = N/m$. Where $e$ is the number of epochs, $N$ is the number training pairs used and $m$ is the size of the batch. 
 
 \subsubsection{Beam Search Decoder}
 
@@ -179,15 +190,12 @@ To test how the beam search decoder affects the output quality we train the mode
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{img/beam_width2.eps}
+    \includegraphics[width=\linewidth]{img/beam_width3.eps}
     \caption{The effect of beam width on edit distance}
     \label{fig_beam_width}
 \end{figure}
 
 Unfortunately beam search decoder has an extreme bias for short words. We knew this might be the case but had hoped that it would still show an improvement with low values of $b$. As shown in figure \ref{fig_beam_width}, even with $b=2$ the quality suffers. As expected $b=1$ behaves the same as greedy decoding.
-
-\subsection{Q11}
-\textit{}
 
 
 \end{document}

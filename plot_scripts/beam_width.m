@@ -14,5 +14,5 @@ xlabel('Iteration');
 ylabel('Avr Edit Distance');
 
 
-lgn = legend({'No Beam', 'K = 1', 'k = 2', 'k = 4', 'k = 8'});
+lgn = legend({'Greedy', 'b = 1', 'b = 2', 'b = 4', 'b = 8'});
 lgn.FontSize = 11;

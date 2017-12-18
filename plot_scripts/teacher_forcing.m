@@ -1,8 +1,8 @@
-m1 = csvread('../experiment_data/teacher_forcing/teacher_forcing_0.0.txt');
+%m1 = csvread('../experiment_data/teacher_forcing/teacher_forcing_0.0.txt');
 m2 = csvread('../experiment_data/teacher_forcing/teacher_forcing_0.1.txt');
 m3 = csvread('../experiment_data/teacher_forcing/teacher_forcing_0.5.txt');
 m4 = csvread('../experiment_data/teacher_forcing/teacher_forcing_0.9.txt');
-m5 = csvread('../experiment_data/teacher_forcing/teacher_forcing_1.0.txt');
+%m5 = csvread('../experiment_data/teacher_forcing/teacher_forcing_1.0.txt');
 
 res = 200;
 M = [m2, m3, m4];
